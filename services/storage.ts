@@ -1,83 +1,79 @@
-
 import { Transaction, AppSettings, Payable } from '../types';
 import { DEFAULT_SETTINGS } from '../constants';
 
 const KEYS = {
-  TRANSACTIONS: 'finor_transactions_v2',
-  SETTINGS: 'finor_settings_v2',
-  PAYABLES: 'finor_payables_v1',
+  TRANSACTIONS: 'finor_transactions',
+  PAYABLES: 'finor_payables',
+  SETTINGS: 'finor_settings'
 };
 
-export const StorageService = {
-  getTransactions: (): Transaction[] => {
+export class StorageService {
+  static getTransactions(): Transaction[] {
     try {
       const data = localStorage.getItem(KEYS.TRANSACTIONS);
       return data ? JSON.parse(data) : [];
     } catch (e) {
-      console.error("Error reading transactions", e);
+      console.error('Error loading transactions', e);
       return [];
     }
-  },
+  }
 
-  saveTransactions: (transactions: Transaction[]) => {
+  static saveTransactions(transactions: Transaction[]): void {
     localStorage.setItem(KEYS.TRANSACTIONS, JSON.stringify(transactions));
-  },
+  }
 
-  getPayables: (): Payable[] => {
+  static getPayables(): Payable[] {
     try {
       const data = localStorage.getItem(KEYS.PAYABLES);
       return data ? JSON.parse(data) : [];
     } catch (e) {
-      console.error("Error reading payables", e);
+      console.error('Error loading payables', e);
       return [];
     }
-  },
+  }
 
-  savePayables: (payables: Payable[]) => {
+  static savePayables(payables: Payable[]): void {
     localStorage.setItem(KEYS.PAYABLES, JSON.stringify(payables));
-  },
+  }
 
-  getSettings: (): AppSettings => {
+  static getSettings(): AppSettings {
     try {
       const data = localStorage.getItem(KEYS.SETTINGS);
-      return data ? JSON.parse(data) : DEFAULT_SETTINGS;
+      if (!data) return DEFAULT_SETTINGS;
+      
+      const settings = JSON.parse(data);
+      // Merge with default to ensure new fields exist if schema changes
+      return { ...DEFAULT_SETTINGS, ...settings };
     } catch (e) {
+      console.error('Error loading settings', e);
       return DEFAULT_SETTINGS;
     }
-  },
+  }
 
-  saveSettings: (settings: AppSettings) => {
+  static saveSettings(settings: AppSettings): void {
     localStorage.setItem(KEYS.SETTINGS, JSON.stringify(settings));
-  },
+  }
 
-  // Backup functionalities
-  exportData: () => {
+  static exportData(): string {
     const data = {
-      transactions: StorageService.getTransactions(),
-      payables: StorageService.getPayables(),
-      settings: StorageService.getSettings(),
-      version: '1.1',
-      exportedAt: new Date().toISOString()
+      transactions: this.getTransactions(),
+      payables: this.getPayables(),
+      settings: this.getSettings(),
+      exportDate: new Date().toISOString()
     };
     return JSON.stringify(data, null, 2);
-  },
+  }
 
-  importData: async (jsonString: string): Promise<boolean> => {
+  static async importData(jsonString: string): Promise<boolean> {
     try {
       const data = JSON.parse(jsonString);
-      if (data.transactions && Array.isArray(data.transactions)) {
-        localStorage.setItem(KEYS.TRANSACTIONS, JSON.stringify(data.transactions));
-      }
-      if (data.payables && Array.isArray(data.payables)) {
-        localStorage.setItem(KEYS.PAYABLES, JSON.stringify(data.payables));
-      }
-      if (data.settings) {
-        localStorage.setItem(KEYS.SETTINGS, JSON.stringify(data.settings));
-      }
+      if (data.transactions) this.saveTransactions(data.transactions);
+      if (data.payables) this.savePayables(data.payables);
+      if (data.settings) this.saveSettings(data.settings);
       return true;
     } catch (e) {
-      console.error("Import failed", e);
+      console.error('Error importing data', e);
       return false;
     }
   }
-};
+}

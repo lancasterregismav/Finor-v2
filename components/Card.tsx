@@ -6,11 +6,11 @@ interface CardProps {
   onClick?: () => void;
 }
 
-export const Card: React.FC<CardProps> = ({ children, className = "", onClick }) => {
+export const Card: React.FC<CardProps> = ({ children, className = '', onClick }) => {
   return (
     <div 
       onClick={onClick}
-      className={`bg-white rounded-2xl shadow-sm border border-slate-100 p-4 ${className}`}
+      className={`bg-white p-5 rounded-2xl border border-slate-100 shadow-sm ${className}`}
     >
       {children}
     </div>
